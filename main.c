@@ -15,7 +15,7 @@ int dictionary[54] = {};
  *  lower case ASCII -> 97-122           ---> 0-25
  *  caps lock ASCII -> 65- 90            ---> 26-51
  *  minus -> 45 . underscore -> 126      ---> 52-53
- *   #symbols -> 54
+ *  #symbols -> 54
  */
 
 typedef struct {
