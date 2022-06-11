@@ -6,7 +6,7 @@
 #define DIC_SIZE 64
 
 int k, attempts, gameon = 1, valid = 0;
-char *r, *p, *discovered, *buffer, *warning;
+char *r, *p, *discovered, *buffer;
 int dictionary[DIC_SIZE] = {};
 char **not_present;
 int w;
@@ -57,21 +57,18 @@ void inorder_tree_walk(node *n) {
 char count_letters(node *n) {
     int count = 0;
     for (int i = 0; i < DIC_SIZE; i++) {
-        if (dictionary[i] < 0) {
+        if (dictionary[i] == -1) {
             for (int j = 0; j < k; j++) {
-                if (n->key[j] == d_convert(i)) return 'n';
+                if (memchr(n->key, d_convert(i), k) != NULL) return 'n';
             }
         }
         if (dictionary[i] > 0) {
             for (int j = 0; j < k; j++) {
                 if (n->key[j] == d_convert(i)) count++;
             }
-            if (count != dictionary[i]) {
-                n->v = 'n';
-                return 'n';
-            }
-            count = 0;
+            if (count != dictionary[i]) return 'n';
         }
+        count = 0;
     }
     return 'y';
 }
@@ -145,21 +142,20 @@ void *add(node *n) {
 
 void command(char *string) {
     if (string[1] == 'n') {
-        if (w != 0) reset();
-        fflush(stdin);
-        warning = fgets(r, k + 1, stdin);
+        if (w != 0) w++;
+        reset();
+        w = scanf("%s", r);
         w = scanf("%d", &attempts);
         gameon = 0;
         return;
     }
     if (string[1] == 'i') {
         while (1) {
-            warning = fgets(buffer, k + 1, stdin);
+            w = scanf("%s", buffer);
             if (buffer[0] == '+') {
                 if (buffer[1] == 'i') {
                     if (attempts == 0) {
-                        fflush(stdin);
-                        warning = fgets(buffer, k + 1, stdin);
+                        w = scanf("%s", buffer);
                         if (buffer[0] == '+') command(buffer);
                         return;
                     }
@@ -179,8 +175,7 @@ void command(char *string) {
 
 void pregame() {
     while (1) {
-        fflush(stdin);
-        warning = fgets(buffer, k + 1, stdin);
+        w = scanf("%s", buffer);
         if (buffer[0] == '+') {
             command(buffer);
             return;
@@ -192,22 +187,22 @@ void pregame() {
 void d_update(char c, char bool, int count) {
     if (bool == 'n') {
         if (islower(c) != 0) {
-            dictionary[c - 97]--;
+            dictionary[c - 97] = -1;
             return;
         }
         if (isupper(c) != 0) {
-            dictionary[c - 39]--;
+            dictionary[c - 39] = -1;
             return;
         }
         if (isalnum(c) != 0) {
-            dictionary[c + 6]--;
+            dictionary[c + 6] = -1;
             return;
         }
         if (c == 126) {
-            dictionary[53]--;
+            dictionary[53] = -1;
             return;
         }
-        dictionary[52]--;
+        dictionary[52] = -1;
         return;
     }
     if (islower(c) != 0) {
@@ -260,7 +255,7 @@ void game() {
                     if (j < i) recP++;
                 }
             }
-            if (recA >= recB || recB > i || recB - recP > 0) {
+            if (recA >= recB || recB > i || recA - recP > 0) {
                 printf("|");
                 if (memchr(not_present[i], p[i], DIC_SIZE) == NULL) {
                     for (int j = 0; j < DIC_SIZE; j++) {
@@ -306,23 +301,21 @@ int main() {
     memset(discovered, '#', k);
     root = malloc(sizeof(node));
     root->v = 'y';
-    fflush(stdin);
     root->key = malloc(k);
-    warning = fgets(root->key, k + 1, stdin);
+    w = scanf("%s", root->key);
     root->left = initialize((node *) root->left);
     root->right = initialize((node *) root->right);
     buffer = malloc(k);
     pregame();
     while (1) {
-        if (gameon == -2 && warning == NULL) break;
+        if (gameon == -2 && w == EOF) break;
         if (attempts == 0) {
             printf("ko\n");
             pregame();
         }
         gameon = 0;
-        fflush(stdin);
-        warning = fgets(p, k + 1, stdin);
-        if (warning == NULL) return 0;
+        w = scanf("%s", p);
+        if (w == EOF) return 0;
         if (p[0] == '+') {
             command(p);
             gameon = 2;
