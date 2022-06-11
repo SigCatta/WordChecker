@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #define DIC_SIZE 64
 
 int k, attempts, gameon = 1, valid = 0;
 char *r, *p, *discovered, *buffer;
-int dictionary[DIC_SIZE] = {};
+int *dictionary;
 char **not_present;
 int w;
 
@@ -58,9 +57,7 @@ char count_letters(node *n) {
     int count = 0;
     for (int i = 0; i < DIC_SIZE; i++) {
         if (dictionary[i] == -1) {
-            for (int j = 0; j < k; j++) {
-                if (memchr(n->key, d_convert(i), k) != NULL) return 'n';
-            }
+            if (memchr(n->key, d_convert(i), k) != NULL) return 'n';
         }
         if (dictionary[i] > 0) {
             for (int j = 0; j < k; j++) {
@@ -115,7 +112,7 @@ void valid_all(node *n) {
 void reset() {
     valid_all(root);
     memset(discovered, '#', k);
-    memset(dictionary, 0, sizeof(dictionary));
+    memset(dictionary, 0, DIC_SIZE * sizeof(int));
     for (int i = 0; i < k; i++) memset(not_present[i], '#', DIC_SIZE);
 }
 
@@ -186,15 +183,15 @@ void pregame() {
 
 void d_update(char c, char bool, int count) {
     if (bool == 'n') {
-        if (islower(c) != 0) {
+        if (c >= 97 && c <= 122) {
             dictionary[c - 97] = -1;
             return;
         }
-        if (isupper(c) != 0) {
+        if (c >= 65 && c <= 90) {
             dictionary[c - 39] = -1;
             return;
         }
-        if (isalnum(c) != 0) {
+        if (c >= 48 && c <= 57) {
             dictionary[c + 6] = -1;
             return;
         }
@@ -205,16 +202,16 @@ void d_update(char c, char bool, int count) {
         dictionary[52] = -1;
         return;
     }
-    if (islower(c) != 0) {
+    if (c >= 97 && c <= 122) {
         dictionary[c - 97] = count;
         return;
     }
-    if (isupper(c) != 0) {
+    if (c >= 65 && c <= 90) {
         dictionary[c - 39] = count;
         return;
 
     }
-    if (isalnum(c) != 0) {
+    if (c >= 48 && c <= 57) {
         dictionary[c + 6] = count;
         return;
     }
@@ -228,7 +225,7 @@ void d_update(char c, char bool, int count) {
 
 void valid_count(node *n) {
     if (n->key != NULL) {
-        if (n->v == 'y') valid = valid + 1;
+        if (n->v == 'y') valid++;
         valid_count((node *) n->right);
         valid_count((node *) n->left);
     }
@@ -244,7 +241,7 @@ void game() {
             printf("+");
             discovered[i] = p[i];
         } else if (memchr(r, p[i], k) == NULL) {
-            d_update(p[i], 'n', 0);
+            d_update(p[i], 'n', -1);
             printf("/");
         } else {
             int recA = 0, recB = 0, recP = 0;
@@ -297,6 +294,7 @@ int main() {
         not_present[i] = malloc(DIC_SIZE);
         memset(not_present[i], '#', DIC_SIZE);
     }
+    dictionary = calloc(DIC_SIZE, sizeof(int));
     discovered = malloc(k);
     memset(discovered, '#', k);
     root = malloc(sizeof(node));
