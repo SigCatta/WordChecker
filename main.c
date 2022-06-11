@@ -5,11 +5,12 @@
 
 #define DIC_SIZE 64
 
-int k, attempts, gameon = 1;
+int k, attempts, gameon = 1, valid = 0;
 char *r, *p, *discovered, *buffer;
 int dictionary[DIC_SIZE] = {};
 char **not_present;
 int w;
+
 /*          DICTIONARY
  *  lower case ASCII -> 97-122           ---> 0-25
  *  caps lock ASCII -> 65- 90            ---> 26-51
@@ -39,7 +40,7 @@ int exists(node *n) {
 
 char d_convert(int n) {
     if (n <= 25) return 'a' + n;
-    if (n >= 54) return '0' + (n - 48);
+    if (n >= 54) return '0' + (n - 54);
     if (n == 52) return '-';
     if (n == 53) return '_';
     return 'A' + (n - 26);
@@ -53,33 +54,52 @@ void inorder_tree_walk(node *n) {
     }
 }
 
-void count_letters(node *n) {
+char count_letters(node *n) {
     int count = 0;
     for (int i = 0; i < DIC_SIZE; i++) {
+        if (dictionary[i] < 0) {
+            for (int j = 0; j < k; j++) {
+                if (n->key[j] == d_convert(i)) return 'n';
+            }
+        }
         if (dictionary[i] > 0) {
             for (int j = 0; j < k; j++) {
                 if (n->key[j] == d_convert(i)) count++;
             }
             if (count != dictionary[i]) {
                 n->v = 'n';
-                return;
+                return 'n';
             }
             count = 0;
         }
     }
+    return 'y';
+}
+
+char check_presence(node *n) {
+    for (int i = 0; i < k; i++) {
+        for (int j = 0; j < DIC_SIZE; j++) {
+            if (not_present[i][j] == '#') break;
+            if (not_present[i][j] == n->key[i]) return 'n';
+        }
+    }
+    return 'y';
 }
 
 void update_v(node *n) {
-    if (n->key != NULL && n->v == 'y') {
-        for (int i = 0; i < k; i++) {
-            if (discovered[i] != '#') {
-                if (n->key[i] != discovered[i]) {
-                    n->v = 'n';
-                    break;
+    if (n->key != NULL) {
+        if (n->v == 'y') {
+            for (int i = 0; i < k; i++) {
+                if (discovered[i] != '#') {
+                    if (n->key[i] != discovered[i]) {
+                        n->v = 'n';
+                        break;
+                    }
                 }
             }
         }
-        if (n->v == 'y') count_letters(n);
+        if (n->v == 'y') n->v = count_letters(n);
+        if (n->v == 'y') n->v = check_presence(n);
         update_v((node *) n->left);
         update_v((node *) n->right);
     }
@@ -99,6 +119,7 @@ void reset() {
     valid_all(root);
     memset(discovered, '#', k);
     memset(dictionary, 0, sizeof(dictionary));
+    for (int i = 0; i < k; i++) memset(not_present[i], '#', DIC_SIZE);
 }
 
 void *initialize(node *n) {
@@ -124,7 +145,7 @@ void *add(node *n) {
 
 void command(char *string) {
     if (string[1] == 'n') {
-        reset();
+        if (w != 0) reset();
         fflush(stdin);
         fgets(r, k + 1, stdin);
         w = scanf("%d", &attempts);
@@ -136,6 +157,12 @@ void command(char *string) {
             fgets(buffer, k + 1, stdin);
             if (buffer[0] == '+') {
                 if (buffer[1] == 'i') {
+                    if (attempts == 0){
+                        fflush(stdin);
+                        fgets(buffer, k + 1, stdin);
+                        if (buffer[0] == '+') command(buffer);
+                        return;
+                    }
                     gameon = 0;
                     return;
                 } else command(buffer);
@@ -144,7 +171,6 @@ void command(char *string) {
         }
     }
     if (string[1] == 's') {
-        update_v(root);
         inorder_tree_walk(root);
         return;
     }
@@ -205,6 +231,14 @@ void d_update(char c, char bool, int count) {
     return;
 }
 
+void valid_count(node *n) {
+    if (n->key != NULL) {
+        if (n->v == 'y') valid++;
+        valid_count((node *) n->right);
+        valid_count((node *) n->left);
+    }
+}
+
 void game() {
     if (exists(root) == 1) {
         printf("not_exists\n");
@@ -217,7 +251,6 @@ void game() {
         } else if (memchr(r, p[i], k) == NULL) {
             d_update(p[i], 'n', 0);
             printf("/");
-            strcat(not_present[i], &p[i]);
         } else {
             int recA = 0, recB = 0, recP = 0;
             for (int j = 0; j < k; j++) {
@@ -229,25 +262,46 @@ void game() {
             }
             if (recA >= recB || recB > i || recB - recP > 0) {
                 printf("|");
-                strcat(not_present[i], &p[i]);
+                if (memchr(not_present[i], p[i], DIC_SIZE) == NULL) {
+                    for (int j = 0; j < DIC_SIZE; j++) {
+                        if (not_present[i][j] == '#') {
+                            not_present[i][j] = p[i];
+                            break;
+                        }
+                    }
+                }
             } else {
                 d_update(p[i], 'y', recA);
                 printf("/");
-                strcat(not_present[i], &p[i]);
+                if (memchr(not_present[i], p[i], DIC_SIZE) == NULL) {
+                    for (int j = 0; j < DIC_SIZE; j++) {
+                        if (not_present[i][j] == '#') {
+                            not_present[i][j] = p[i];
+                            break;
+                        }
+                    }
+                }
             }
         }
     }
-    printf(", %d\n", --attempts);
+    update_v(root);
+    valid_count(root);
+    printf(", %d\n", valid);
+    valid = 0;
+    attempts--;
     return;
 }
 
 int main() {
-    if (w == -1) w = 0;
     w = scanf("%d", &k);
+    w = 0;
     r = malloc(k);
     p = malloc(k);
-    not_present = calloc(k, sizeof(char *));
-    for (int i = 0; i < k; i++) not_present[i] = malloc(DIC_SIZE - 1);
+    not_present = malloc(sizeof(char *) * k);
+    for (int i = 0; i < k; i++) {
+        not_present[i] = malloc(DIC_SIZE);
+        memset(not_present[i], '#', DIC_SIZE);
+    }
     discovered = malloc(k);
     memset(discovered, '#', k);
     root = malloc(sizeof(node));
