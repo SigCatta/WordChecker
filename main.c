@@ -6,7 +6,7 @@
 #define DIC_SIZE 64
 
 int k, attempts, gameon = 1, valid = 0;
-char *r, *p, *discovered, *buffer;
+char *r, *p, *discovered, *buffer, *warning;
 int dictionary[DIC_SIZE] = {};
 char **not_present;
 int w;
@@ -147,19 +147,19 @@ void command(char *string) {
     if (string[1] == 'n') {
         if (w != 0) reset();
         fflush(stdin);
-        fgets(r, k + 1, stdin);
+        warning = fgets(r, k + 1, stdin);
         w = scanf("%d", &attempts);
         gameon = 0;
         return;
     }
     if (string[1] == 'i') {
         while (1) {
-            fgets(buffer, k + 1, stdin);
+            warning = fgets(buffer, k + 1, stdin);
             if (buffer[0] == '+') {
                 if (buffer[1] == 'i') {
                     if (attempts == 0) {
                         fflush(stdin);
-                        fgets(buffer, k + 1, stdin);
+                        warning = fgets(buffer, k + 1, stdin);
                         if (buffer[0] == '+') command(buffer);
                         return;
                     }
@@ -180,7 +180,7 @@ void command(char *string) {
 void pregame() {
     while (1) {
         fflush(stdin);
-        fgets(buffer, k + 1, stdin);
+        warning = fgets(buffer, k + 1, stdin);
         if (buffer[0] == '+') {
             command(buffer);
             return;
@@ -233,7 +233,7 @@ void d_update(char c, char bool, int count) {
 
 void valid_count(node *n) {
     if (n->key != NULL) {
-        if (n->v == 'y') valid++;
+        if (n->v == 'y') valid = valid + 1;
         valid_count((node *) n->right);
         valid_count((node *) n->left);
     }
@@ -270,6 +270,7 @@ void game() {
                         }
                     }
                 }
+                d_update(p[i], 'y', recA);
             } else {
                 d_update(p[i], 'y', recA);
                 printf("/");
@@ -286,7 +287,7 @@ void game() {
     }
     update_v(root);
     valid_count(root);
-    printf(", %d\n", valid);
+    printf("\n%d\n", valid);
     valid = 0;
     attempts--;
     return;
@@ -294,7 +295,6 @@ void game() {
 
 int main() {
     w = scanf("%d", &k);
-    w = 0;
     r = malloc(k);
     p = malloc(k);
     not_present = malloc(sizeof(char *) * k);
@@ -308,27 +308,28 @@ int main() {
     root->v = 'y';
     fflush(stdin);
     root->key = malloc(k);
-    fgets(root->key, k + 1, stdin);
+    warning = fgets(root->key, k + 1, stdin);
     root->left = initialize((node *) root->left);
     root->right = initialize((node *) root->right);
     buffer = malloc(k);
     pregame();
     while (1) {
-        if (gameon == -2) break;
+        if (gameon == -2 && warning == NULL) break;
         if (attempts == 0) {
-            printf("ko");
+            printf("ko\n");
             pregame();
         }
         gameon = 0;
         fflush(stdin);
-        fgets(p, k + 1, stdin);
+        warning = fgets(p, k + 1, stdin);
+        if (warning == NULL) return 0;
         if (p[0] == '+') {
             command(p);
             gameon = 2;
         }
         if (memcmp(r, p, k) == 0) {
             gameon = 1;
-            printf("ok");
+            printf("ok\n");
         }
         if (gameon == 0) {
             game();
