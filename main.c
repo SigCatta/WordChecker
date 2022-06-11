@@ -157,7 +157,7 @@ void command(char *string) {
             fgets(buffer, k + 1, stdin);
             if (buffer[0] == '+') {
                 if (buffer[1] == 'i') {
-                    if (attempts == 0){
+                    if (attempts == 0) {
                         fflush(stdin);
                         fgets(buffer, k + 1, stdin);
                         if (buffer[0] == '+') command(buffer);
