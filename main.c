@@ -57,6 +57,7 @@ char count_letters(node *n) {
     int count;
     char letter;
     for (int i = 0; i < DIC_SIZE; i++) {
+        if (dictionary[i] == 0) continue;
         letter = d_convert(i);
         count = 0;
         if (dictionary[i] == -1) {
@@ -69,14 +70,14 @@ char count_letters(node *n) {
             if (count != dictionary[i] - 100) return 'n';
             continue;
         }
-        if (dictionary[i] > 0) if (count < dictionary[i]) return 'n';
+        if (dictionary[i] > 0 && count < dictionary[i]) return 'n';
     }
     return 'y';
 }
 
 char check_presence(node *n) {
     for (int i = 0; i < k; i++) {
-        for (int j = 0; j < DIC_SIZE; j++) {
+        for (int j = 0; j < k; j++) {
             if (not_present[i][j] == '#') break;
             if (not_present[i][j] == n->key[i]) return 'n';
         }
@@ -95,9 +96,9 @@ void update_v(node *n) {
                     }
                 }
             }
+            if (n->v == 'y') n->v = count_letters(n);
+            if (n->v == 'y') n->v = check_presence(n);
         }
-        if (n->v == 'y') n->v = count_letters(n);
-        if (n->v == 'y') n->v = check_presence(n);
         update_v((node *) n->left);
         update_v((node *) n->right);
     }
@@ -117,7 +118,7 @@ void reset() {
     valid_all(root);
     memset(discovered, '#', k);
     memset(dictionary, 0, DIC_SIZE * sizeof(int));
-    for (int i = 0; i < k; i++) memset(not_present[i], '#', DIC_SIZE);
+    for (int i = 0; i < k; i++) memset(not_present[i], '#', k);
 }
 
 void *initialize(node *n) {
@@ -137,11 +138,11 @@ void *add(node *n) {
         return 0;
     }
     if (memcmp(buffer, n->key, k) < 0) return add((node *) n->left);
-    if (memcmp(buffer, n->key, k) > 0) return add((node *) n->right);
-    return 0;
+    return add((node *) n->right);
 }
 
 void command(char *string) {
+    valid = 0;
     if (string[1] == 'n') {
         if (w != 0) w++;
         reset();
@@ -168,10 +169,7 @@ void command(char *string) {
             add(root);
         }
     }
-    if (string[1] == 's') {
-        inorder_tree_walk(root);
-        return;
-    }
+    inorder_tree_walk(root);
     return;
 }
 
@@ -268,7 +266,7 @@ void game() {
                 }
                 if (count == LR) {
                     printf("/");
-                    for (int j = 0; j < DIC_SIZE; j++) {
+                    for (int j = 0; j < k; j++) {
                         if (not_present[i][j] == p[i]) break;
                         if (not_present[i][j] == '#') {
                             not_present[i][j] = p[i];
@@ -282,7 +280,7 @@ void game() {
             if (LV <= LR) {
                 printf("|");
                 d_update(p[i], 'y', LV);
-                for (int j = 0; j < DIC_SIZE; j++) {
+                for (int j = 0; j < k; j++) {
                     if (not_present[i][j] == p[i]) break;
                     if (not_present[i][j] == '#') {
                         not_present[i][j] = p[i];
@@ -293,7 +291,7 @@ void game() {
             }
             d_update(p[i], 'y', 100 + LR);
             printf("/");
-            for (int j = 0; j < DIC_SIZE; j++) {
+            for (int j = 0; j < k; j++) {
                 if (not_present[i][j] == p[i]) break;
                 if (not_present[i][j] == '#') {
                     not_present[i][j] = p[i];
@@ -302,10 +300,12 @@ void game() {
             }
         }
     }
-    update_v(root);
-    valid_count(root);
+    if (valid != 1) {
+        update_v(root);
+        valid = 0;
+        valid_count(root);
+    }
     printf("\n%d\n", valid);
-    valid = 0;
     attempts--;
     return;
 }
@@ -316,8 +316,8 @@ int main() {
     p = malloc(k);
     not_present = malloc(sizeof(char *) * k);
     for (int i = 0; i < k; i++) {
-        not_present[i] = malloc(DIC_SIZE);
-        memset(not_present[i], '#', DIC_SIZE);
+        not_present[i] = malloc(k);
+        memset(not_present[i], '#', k);
     }
     dictionary = calloc(DIC_SIZE, sizeof(int));
     discovered = malloc(k);
@@ -330,8 +330,8 @@ int main() {
     root->right = initialize((node *) root->right);
     buffer = malloc(k);
     pregame();
+    if (gameon == -2 && w == EOF) printf("ERRORE");
     while (1) {
-        if (gameon == -2 && w == EOF) break;
         if (attempts == 0) {
             printf("ko\n");
             pregame();
