@@ -323,8 +323,8 @@ int main() {
     discovered = malloc(k);
     memset(discovered, '#', k);
     root = malloc(sizeof(node));
-    root->v = 'y';
     root->key = malloc(k);
+    root->v = 'y';
     w = scanf("%s", root->key);
     root->left = initialize((node *) root->left);
     root->right = initialize((node *) root->right);
