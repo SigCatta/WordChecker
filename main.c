@@ -28,8 +28,7 @@ typedef struct {
 
 node *hash_table[DIC_SIZE];
 
-unsigned int hash(char *key) {
-    char c = key[0];
+int hash(char c) {
     if (c >= 'a') return c - 97 + 38;
     if (c == '_') return 37;
     if (c >= 'A') return c - 65 + 11;
@@ -66,7 +65,7 @@ void *add(node *n) {
 }
 
 void hash_insert() {
-    int value = hash(buffer);
+    int value = hash(buffer[0]);
     if (hash_table[value]->key == NULL) {
         hash_table[value]->key = malloc(k);
         memcpy(hash_table[value]->key, buffer, k + 1);
@@ -90,12 +89,12 @@ int exists(node *n) {
 }
 
 int hash_search() {
-    int value = hash(p);
+    int value = hash(p[0]);
     if (hash_table[value]->key == NULL) return 1;
     return exists(hash_table[value]);
 }
 
-char d_convert(int n) {
+char hash_invert(int n) {
     if (n >= 38) return 'a' + (n - 38);
     if (n == 37) return '_';
     if (n >= 11) return 'A' + (n - 11);
@@ -113,7 +112,7 @@ void inorder_tree_walk(node *n) {
 
 void print_table() {
     if (discovered[0] != '#') {
-        inorder_tree_walk(hash_table[hash(discovered)]);
+        inorder_tree_walk(hash_table[hash(discovered[0])]);
         return;
     }
     for (int i = 0; i < DIC_SIZE; i++) {
@@ -128,7 +127,7 @@ char count_letters(char *c) {
     char letter;
     for (int i = 0; i < DIC_SIZE; i++) {
         if (dictionary[i] == 0) continue;
-        letter = d_convert(i);
+        letter = hash_invert(i);
         count = 0;
         if (dictionary[i] == -1) {
             if (memchr(c, letter, k) != NULL) return 'n';
@@ -208,11 +207,6 @@ void command(char *string) {
             w = scanf("%s", buffer);
             if (buffer[0] == '+') {
                 if (buffer[1] == 'i') {
-                    if (attempts == 0) {
-                        w = scanf("%s", buffer);
-                        if (buffer[0] == '+') command(buffer);
-                        return;
-                    }
                     gameon = 0;
                     for (int i = 0; i < DIC_SIZE; i++) {
                         if (dictionary[i] == -1) continue;
@@ -230,43 +224,10 @@ void command(char *string) {
 
 void d_update(char c, char bool, int count) {
     if (bool == 'n') {
-        if (c >= 97) {
-            dictionary[c - 97 + 38] = -1;
-            return;
-        }
-        if (c == 95) {
-            dictionary[37] = -1;
-            return;
-        }
-        if (c >= 65) {
-            dictionary[c - 65 + 11] = -1;
-            return;
-        }
-        if (c >= 48) {
-            dictionary[c - 48 + 1] = -1;
-            return;
-        }
-        dictionary[0] = -1;
+        dictionary[hash(c)] = -1;
         return;
     }
-    if (c >= 97) {
-        if (count > dictionary[c - 97 + 38]) dictionary[c - 97 + 38] = count;
-        return;
-    }
-    if (c == 95) {
-        if (count > dictionary[37]) dictionary[37] = count;
-        return;
-    }
-    if (c >= 65) {
-        if (count > dictionary[c - 65 + 11]) dictionary[c - 65 + 11] = count;
-        return;
-    }
-    if (c >= 48) {
-        if (count > dictionary[c - 48 + 1]) dictionary[c - 48 + 1] = count;
-        return;
-    }
-    if (count > dictionary[0]) dictionary[0] = count;
-    return;
+    if (count > dictionary[hash(c)]) dictionary[hash(c)] = count;
 }
 
 void pregame() {
@@ -357,9 +318,9 @@ void game() {
     }
     if (valid != 1) {
         if (discovered[0] != '#') {
-            update_v(hash_table[hash(discovered)]);
+            update_v(hash_table[hash(discovered[0])]);
             valid = 0;
-            valid_count(hash_table[hash(discovered)]);
+            valid_count(hash_table[hash(discovered[0])]);
         } else {
             for (int i = 0; i < DIC_SIZE; i++) {
                 if (dictionary[i] == -1) continue;
@@ -411,9 +372,7 @@ int main() {
             gameon = 1;
             printf("ok\n");
         }
-        if (gameon == 0) {
-            game();
-        }
+        if (gameon == 0) game();
         if (gameon == 1) pregame();
     }
 }
