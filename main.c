@@ -215,7 +215,7 @@ void command(char *string) {
                     return;
                 } else command(buffer);
             }
-            hash_insert();
+            add(hash_table[hash(buffer[0])]);
         }
     }
     print_table();
@@ -237,7 +237,7 @@ void pregame() {
             command(buffer);
             return;
         }
-        hash_insert();
+        add(hash_table[hash(buffer[0])]);
     }
 }
 
@@ -353,7 +353,7 @@ int main() {
     memset(discovered, '#', k);
     buffer = malloc(k);
     w = scanf("%s", buffer);
-    hash_insert();
+    add(hash_table[hash(buffer[0])]);
     pregame();
     if (gameon == -2 && w == EOF) printf("ERRORE");
     while (1) {
