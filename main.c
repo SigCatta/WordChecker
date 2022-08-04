@@ -117,6 +117,7 @@ void print_table() {
         return;
     }
     for (int i = 0; i < DIC_SIZE; i++) {
+        if (dictionary[i] == -1) continue;
         if (hash_table[i]->key == NULL) continue;
         inorder_tree_walk(hash_table[i]);
     }
@@ -214,6 +215,7 @@ void command(char *string) {
                     }
                     gameon = 0;
                     for (int i = 0; i < DIC_SIZE; i++) {
+                        if (dictionary[i] == -1) continue;
                         if (hash_table[i] != NULL) update_v(hash_table[i]);
                     }
                     return;
@@ -225,6 +227,7 @@ void command(char *string) {
     print_table();
     return;
 }
+
 void d_update(char c, char bool, int count) {
     if (bool == 'n') {
         if (c >= 97) {
@@ -359,10 +362,12 @@ void game() {
             valid_count(hash_table[hash(discovered)]);
         } else {
             for (int i = 0; i < DIC_SIZE; i++) {
+                if (dictionary[i] == -1) continue;
                 if (hash_table[i] != NULL) update_v(hash_table[i]);
             }
             valid = 0;
             for (int i = 0; i < DIC_SIZE; i++) {
+                if (dictionary[i] == -1) continue;
                 if (hash_table[i] != NULL) valid_count(hash_table[i]);
             }
         }
