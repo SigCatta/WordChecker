@@ -64,20 +64,6 @@ void *add(node *n) {
     return add((node *) n->right);
 }
 
-void hash_insert() {
-    int value = hash(buffer[0]);
-    if (hash_table[value]->key == NULL) {
-        hash_table[value]->key = malloc(k);
-        memcpy(hash_table[value]->key, buffer, k + 1);
-        hash_table[value]->left = initialize((node *) hash_table[value]->left);
-        hash_table[value]->right = initialize((node *) hash_table[value]->right);
-        hash_table[value]->v = 'y';
-        return;
-    }
-    add(hash_table[value]);
-    return;
-}
-
 int exists(node *n) {
     if (n->key != NULL) {
         int value = memcmp(p, n->key, k);
