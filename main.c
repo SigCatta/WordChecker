@@ -10,23 +10,16 @@ int *dictionary;
 char **not_present;
 int w;
 
-/*          DICTIONARY
- *  minus -> 45                          ---> 0
- *  numbers -> 48 - 57                   ---> 1-10
- *  caps lock ASCII -> 65- 90            ---> 11-36
- *  underscore -> 95                     ---> 37
- *  lower case ASCII -> 97-122           ---> 38-63
- *  #symbols -> 64
- */
-
 typedef struct {
+    struct node *father;
     struct node *left;
     struct node *right;
     char *key;
     char v;
+    char color;
 } node;
 
-node *hash_table[DIC_SIZE];
+struct node *hash_table[DIC_SIZE];
 
 int hash(char c) {
     if (c >= 'a') return c - 97 + 38;
@@ -39,7 +32,7 @@ int hash(char c) {
 void hash_init() {
     for (int i = 0; i < DIC_SIZE; i++) {
         hash_table[i] = malloc(sizeof(node));
-        hash_table[i]->key = NULL;
+        ((node *) hash_table[i])->key = NULL;
     }
     return;
 }
@@ -47,21 +40,30 @@ void hash_init() {
 void *initialize(node *n) {
     n = malloc(sizeof(node));
     n->key = NULL;
+    n->color = 'b';
     n->v = 'n';
     return n;
 }
+/*
+void right_rotate();
 
-void *add(node *n) {
+void left_rotate();
+
+void fixup();
+*/
+void *add(node *n, node *f) {
     if (n->key == NULL) {
         n->key = malloc(k);
+        n->father = (struct node *) f;
         memcpy(n->key, buffer, k + 1);
         n->left = initialize((node *) n->left);
         n->right = initialize((node *) n->right);
         n->v = 'y';
+        //fixup();
         return 0;
     }
-    if (memcmp(buffer, n->key, k) < 0) return add((node *) n->left);
-    return add((node *) n->right);
+    if (memcmp(buffer, n->key, k) < 0) return add((node *) n->left, n);
+    return add((node *) n->right, n);
 }
 
 int exists(node *n) {
@@ -76,8 +78,8 @@ int exists(node *n) {
 
 int hash_search() {
     int value = hash(p[0]);
-    if (hash_table[value]->key == NULL) return 1;
-    return exists(hash_table[value]);
+    if (((node *) hash_table[value])->key == NULL) return 1;
+    return exists((node *)hash_table[value]);
 }
 
 char hash_invert(int n) {
@@ -98,13 +100,13 @@ void inorder_tree_walk(node *n) {
 
 void print_table() {
     if (discovered[0] != '#') {
-        inorder_tree_walk(hash_table[hash(discovered[0])]);
+        inorder_tree_walk((node *)hash_table[hash(discovered[0])]);
         return;
     }
     for (int i = 0; i < DIC_SIZE; i++) {
         if (dictionary[i] == -1) continue;
-        if (hash_table[i]->key == NULL) continue;
-        inorder_tree_walk(hash_table[i]);
+        if (((node *) hash_table[i])->key == NULL) continue;
+        inorder_tree_walk((node *)hash_table[i]);
     }
 }
 
@@ -171,7 +173,7 @@ void valid_all(node *n) {
 
 void reset() {
     for (int i = 0; i < DIC_SIZE; i++) {
-        valid_all(hash_table[i]);
+        valid_all((node *)hash_table[i]);
     }
     memset(discovered, '#', k);
     memset(dictionary, 0, DIC_SIZE * sizeof(int));
@@ -196,12 +198,12 @@ void command(char *string) {
                     gameon = 0;
                     for (int i = 0; i < DIC_SIZE; i++) {
                         if (dictionary[i] == -1) continue;
-                        if (hash_table[i] != NULL) update_v(hash_table[i]);
+                        if (hash_table[i] != NULL) update_v((node *)hash_table[i]);
                     }
                     return;
                 } else command(buffer);
             }
-            add(hash_table[hash(buffer[0])]);
+            add((node *)hash_table[hash(buffer[0])], NULL);
         }
     }
     print_table();
@@ -223,7 +225,7 @@ void pregame() {
             command(buffer);
             return;
         }
-        add(hash_table[hash(buffer[0])]);
+        add((node *)hash_table[hash(buffer[0])], NULL);
     }
 }
 
@@ -304,18 +306,18 @@ void game() {
     }
     if (valid != 1) {
         if (discovered[0] != '#') {
-            update_v(hash_table[hash(discovered[0])]);
+            update_v((node *)hash_table[hash(discovered[0])]);
             valid = 0;
-            valid_count(hash_table[hash(discovered[0])]);
+            valid_count((node *)hash_table[hash(discovered[0])]);
         } else {
             for (int i = 0; i < DIC_SIZE; i++) {
                 if (dictionary[i] == -1) continue;
-                if (hash_table[i] != NULL) update_v(hash_table[i]);
+                if (hash_table[i] != NULL) update_v((node *)hash_table[i]);
             }
             valid = 0;
             for (int i = 0; i < DIC_SIZE; i++) {
                 if (dictionary[i] == -1) continue;
-                if (hash_table[i] != NULL) valid_count(hash_table[i]);
+                if (hash_table[i] != NULL) valid_count((node *)hash_table[i]);
             }
         }
     }
@@ -339,7 +341,7 @@ int main() {
     memset(discovered, '#', k);
     buffer = malloc(k);
     w = scanf("%s", buffer);
-    add(hash_table[hash(buffer[0])]);
+    add((node *)hash_table[hash(buffer[0])], NULL);
     pregame();
     if (gameon == -2 && w == EOF) printf("ERRORE");
     while (1) {
