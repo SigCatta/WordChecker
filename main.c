@@ -40,29 +40,28 @@ void hash_init() {
 void *initialize(node *n) {
     n = malloc(sizeof(node));
     n->key = NULL;
-    n->v = 'n';
     return n;
 }
 
-void *add(node *n) {
-    if (n->key == NULL) {
-        n->key = malloc(k);
-        memcpy(n->key, buffer, k + 1);
-        n->left = initialize((node *) n->left);
-        n->right = initialize((node *) n->right);
-        n->v = 'y';
-        return 0;
+void add(node *n) {
+    while (n->key != NULL) {
+        if (memcmp(buffer, n->key, k) < 0) n = (node *) n->left;
+        else n = (node *) n->right;
     }
-    if (memcmp(buffer, n->key, k) < 0) return add((node *) n->left);
-    return add((node *) n->right);
+    n->key = malloc(k);
+    memcpy(n->key, buffer, k + 1);
+    n->left = initialize((node *) n->left);
+    n->right = initialize((node *) n->right);
+    n->v = 'y';
+    return;
 }
 
 int exists(node *n) {
-    if (n->key != NULL) {
+    while (n->key != NULL) {
         int value = memcmp(p, n->key, k);
         if (value == 0) return 0;
-        if (value < 0) return exists((node *) n->left);
-        return exists((node *) n->right);
+        if (value < 0) n = (node *) n->left;
+        else n = (node *) n->right;
     }
     return 1;
 }
@@ -131,7 +130,7 @@ char count_letters(char *c) {
             if (count != dictionary[i] - 100) return 'n';
             continue;
         }
-        if (dictionary[i] > 0 && count < dictionary[i]) return 'n';
+        if (count < dictionary[i]) return 'n';
     }
     return 'y';
 }
@@ -139,28 +138,55 @@ char count_letters(char *c) {
 void update_v(node *n) {
     char *c = n->key;
     if (c != NULL) {
+        update_v((node *) n->left);
+        update_v((node *) n->right);
         if (n->v == 'y') {
             for (int i = 0; i < k; i++) {
                 if (discovered[i] != '#') {
                     if (c[i] != discovered[i]) {
                         n->v = 'n';
-                        break;
+                        return;
                     }
                 }
             }
-            if (n->v == 'y') {
-                for (int i = 0; i < k; i++) {
-                    if (memchr(not_present[i], c[i], k) != NULL) {
-                        n->v = 'n';
-                        break;
-                    }
+            for (int i = 0; i < k; i++) {
+                if (memchr(not_present[i], c[i], k) != NULL) {
+                    n->v = 'n';
+                    return;
                 }
             }
-            if (n->v == 'y') n->v = count_letters(c);
+            if (count_letters(c) == 'n') {
+                n->v = 'n';
+                return;
+            }
+            valid++;
         }
-        update_v((node *) n->left);
-        update_v((node *) n->right);
     }
+    return;
+}
+
+void add_ins(node *n) {
+    while (n->key != NULL) {
+        if (memcmp(buffer, n->key, k) < 0) n = (node *) n->left;
+        else n = (node *) n->right;
+    }
+    n->key = malloc(k);
+    memcpy(n->key, buffer, k + 1);
+    n->left = initialize((node *) n->left);
+    n->right = initialize((node *) n->right);
+    char *c = n->key;
+/* update_v for new words */
+    for (int i = 0; i < k; i++) {
+        if (discovered[i] != '#') {
+            if (c[i] != discovered[i]) return;
+        }
+    }
+    for (int i = 0; i < k; i++) {
+        if (memchr(not_present[i], c[i], k) != NULL) return;
+    }
+    if (count_letters(c) == 'n') return;
+    n->v = 'y';
+    valid++;
     return;
 }
 
@@ -173,23 +199,18 @@ void valid_all(node *n) {
     return;
 }
 
-void reset() {
-    for (int i = 0; i < DIC_SIZE; i++) {
-        for (int j = 0; j < DIC_SIZE; j++) {
-            valid_all(hash_table[i][j]);
-        }
-    }
-    memset(discovered, '#', k);
-    memset(dictionary, 0, DIC_SIZE * sizeof(int));
-    for (int i = 0; i < k; i++) memset(not_present[i], '#', k);
-    return;
-}
-
 void command(char *string) {
-    valid = 0;
     if (string[1] == 'n') {
-        if (w != 0) w++;
-        reset();
+        for (int i = 0; i < DIC_SIZE; i++) {
+            for (int j = 0; j < DIC_SIZE; j++) {
+                valid_all(hash_table[i][j]);
+            }
+        }
+        valid = 0;
+        memset(discovered, '#', k);
+        memset(dictionary, 0, DIC_SIZE * sizeof(int));
+        for (int i = 0; i < k; i++) memset(not_present[i], '#', k);
+/* rules rest done */
         w = scanf("%s", r);
         w = scanf("%d", &attempts);
         gameon = 0;
@@ -201,17 +222,10 @@ void command(char *string) {
             if (buffer[0] == '+') {
                 if (buffer[1] == 'i') {
                     gameon = 0;
-                    for (int i = 0; i < DIC_SIZE; i++) {
-                        if (dictionary[i] == -1) continue;
-                        for (int j = 0; j < DIC_SIZE; j++) {
-                            if (dictionary[j] == -1) continue;
-                            if (hash_table[i][j] != NULL) update_v(hash_table[i][j]);
-                        }
-                    }
                     return;
                 } else command(buffer);
             }
-            add(hash_table[hash(buffer[0])][hash(buffer[1])]);
+            add_ins(hash_table[hash(buffer[0])][hash(buffer[1])]);
         }
     }
     print_table();
@@ -235,16 +249,6 @@ void pregame() {
             return;
         }
         add(hash_table[hash(buffer[0])][hash(buffer[1])]);
-    }
-}
-
-void valid_count(node *n) {
-    if (n->key != NULL) {
-        if (n->v == 'y') {
-            valid++;
-        }
-        valid_count((node *) n->right);
-        valid_count((node *) n->left);
     }
 }
 
@@ -320,13 +324,11 @@ void game() {
         if (discovered[0] != '#') {
             if (discovered[1] != '#') {
                 update_v(hash_table[hash(discovered[0])][hash(discovered[1])]);
-                valid_count(hash_table[hash(discovered[0])][hash(discovered[1])]);
             } else {
                 int first = hash(discovered[0]);
                 for (int i = 0; i < DIC_SIZE; i++) {
                     if (dictionary[i] == -1) continue;
                     update_v(hash_table[first][i]);
-                    valid_count(hash_table[first][i]);
                 }
             }
         } else if (discovered[1] != '#') {
@@ -334,7 +336,6 @@ void game() {
             for (int i = 0; i < DIC_SIZE; i++) {
                 if (dictionary[i] == -1) continue;
                 update_v(hash_table[i][second]);
-                valid_count(hash_table[i][second]);
             }
         } else {
             for (int i = 0; i < DIC_SIZE; i++) {
@@ -342,7 +343,6 @@ void game() {
                 for (int j = 0; j < DIC_SIZE; j++) {
                     if (dictionary[j] == -1) continue;
                     update_v(hash_table[i][j]);
-                    valid_count(hash_table[i][j]);
                 }
             }
         }
