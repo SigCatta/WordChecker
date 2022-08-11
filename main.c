@@ -57,11 +57,11 @@ void add(node *n) {
 }
 
 int exists(node *n) {
-    while (n->key != NULL) {
+    if (n->key != NULL) {
         int value = memcmp(p, n->key, k);
         if (value == 0) return 0;
-        if (value < 0) n = (node *) n->left;
-        else n = (node *) n->right;
+        if (value < 0) return exists((node *) n->left);
+        return exists((node *) n->right);
     }
     return 1;
 }
@@ -165,6 +165,27 @@ void update_v(node *n) {
     return;
 }
 
+void valid_all(node *n) {
+    if (n->key != NULL) {
+        valid_all((node *) n->left);
+        n->v = 'y';
+        valid_all((node *) n->right);
+    }
+    return;
+}
+
+void reset() {
+    for (int i = 0; i < DIC_SIZE; i++) {
+        for (int j = 0; j < DIC_SIZE; j++) {
+            valid_all(hash_table[i][j]);
+        }
+    }
+    memset(discovered, '#', k);
+    memset(dictionary, 0, DIC_SIZE * sizeof(int));
+    for (int i = 0; i < k; i++) memset(not_present[i], '#', k);
+    return;
+}
+
 void add_ins(node *n) {
     while (n->key != NULL) {
         if (memcmp(buffer, n->key, k) < 0) n = (node *) n->left;
@@ -190,27 +211,11 @@ void add_ins(node *n) {
     return;
 }
 
-void valid_all(node *n) {
-    if (n->key != NULL) {
-        valid_all((node *) n->left);
-        n->v = 'y';
-        valid_all((node *) n->right);
-    }
-    return;
-}
-
 void command(char *string) {
+    valid = 0;
     if (string[1] == 'n') {
-        for (int i = 0; i < DIC_SIZE; i++) {
-            for (int j = 0; j < DIC_SIZE; j++) {
-                valid_all(hash_table[i][j]);
-            }
-        }
-        valid = 0;
-        memset(discovered, '#', k);
-        memset(dictionary, 0, DIC_SIZE * sizeof(int));
-        for (int i = 0; i < k; i++) memset(not_present[i], '#', k);
-/* rules rest done */
+        if (w != 0) w++;
+        reset();
         w = scanf("%s", r);
         w = scanf("%d", &attempts);
         gameon = 0;
