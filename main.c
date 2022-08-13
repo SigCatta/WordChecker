@@ -193,12 +193,11 @@ void command(char *string) {
                     valid_all(hash_table[i][j]);
                 }
             }
+            memset(discovered, '#', k);
+            memset(dictionary, 0, DIC_SIZE * sizeof(int));
+            for (int i = 0; i < k; i++) memset(not_present[i], '#', k);
             valid = 0;
-        }
-        flag = 0;
-        memset(discovered, '#', k);
-        memset(dictionary, 0, DIC_SIZE * sizeof(int));
-        for (int i = 0; i < k; i++) memset(not_present[i], '#', k);
+        } else flag = 0;
 /* rules rest done */
         w = scanf("%s", r);
         w = scanf("%d", &attempts);
