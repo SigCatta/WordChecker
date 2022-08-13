@@ -4,7 +4,7 @@
 
 #define DIC_SIZE 64
 
-int k, attempts, gameon = 1, valid = 0;
+int k, attempts, flag = 1, gameon = 1, valid = 0;
 char *r, *p, *discovered, *buffer;
 int *dictionary;
 char **not_present;
@@ -20,44 +20,37 @@ typedef struct {
 node *hash_table[DIC_SIZE][DIC_SIZE];
 
 int hash(char c) {
-    if (c >= 'a') return c - 97 + 38;
-    if (c == '_') return 37;
-    if (c >= 'A') return c - 65 + 11;
-    if (c >= '0') return c - 48 + 1;
-    return 0;
+    return ((c >= '0') * (c <= '9') * (c - 48 + 1)) + ((c >= 'A') * (c <= 'Z') * (c - 65 + 11)) + ((c == '_') * 37) +
+           ((c >= 'a') * (c <= 'z') * (c - 97 + 38));
 }
 
 void hash_init() {
     for (int i = 0; i < DIC_SIZE; i++) {
         for (int j = 0; j < DIC_SIZE; j++) {
-            hash_table[i][j] = malloc(sizeof(node));
-            hash_table[i][j]->key = NULL;
+            hash_table[i][j] = NULL;
         }
     }
-    return;
 }
 
-void *initialize(node *n) {
-    n = malloc(sizeof(node));
-    n->key = NULL;
+node *new_node() {
+    node *n = malloc(sizeof(node));
+    n->key = malloc(k);
+    memcpy(n->key, buffer, k);
+    n->left = n->right = NULL;
+    n->v = 'y';
     return n;
 }
 
-void add(node *n) {
-    while (n->key != NULL) {
-        if (memcmp(buffer, n->key, k) < 0) n = (node *) n->left;
-        else n = (node *) n->right;
+void add(node **tree) {
+    while ((*tree) != NULL) {
+        if (memcmp(buffer, (*tree)->key, k) < 0) tree = (node **) &(*tree)->left;
+        else tree = (node **) &(*tree)->right;
     }
-    n->key = malloc(k);
-    memcpy(n->key, buffer, k + 1);
-    n->left = initialize((node *) n->left);
-    n->right = initialize((node *) n->right);
-    n->v = 'y';
-    return;
+    (*tree) = new_node();
 }
 
 int exists(node *n) {
-    while (n->key != NULL) {
+    while (n != NULL) {
         int value = memcmp(p, n->key, k);
         if (value == 0) return 0;
         if (value < 0) n = (node *) n->left;
@@ -66,16 +59,8 @@ int exists(node *n) {
     return 1;
 }
 
-char hash_invert(int n) {
-    if (n >= 38) return 'a' + (n - 38);
-    if (n == 37) return '_';
-    if (n >= 11) return 'A' + (n - 11);
-    if (n >= 1) return '0' + (n - 1);
-    return '-';
-}
-
 void inorder_tree_walk(node *n) {
-    if (n->key != NULL) {
+    if (n != NULL) {
         inorder_tree_walk((node *) n->left);
         if (n->v == 'y') printf("%s\n", n->key);
         inorder_tree_walk((node *) n->right);
@@ -110,7 +95,6 @@ void print_table() {
             inorder_tree_walk(hash_table[i][j]);
         }
     }
-    return;
 }
 
 char count_letters(char *c) {
@@ -118,7 +102,8 @@ char count_letters(char *c) {
     char letter;
     for (int i = 0; i < DIC_SIZE; i++) {
         if (dictionary[i] == 0) continue;
-        letter = hash_invert(i);
+        letter = (('a' + (i - 38)) * (i >= 38)) + ((i == 37) * '_') + ((i >= 11) * (i <= 36) * ('A' + (i - 11))) +
+                 ((i >= 1) * (i <= 10) * ('0' + (i - 1))) + ((i == 0) * '-');
         count = 0;
         if (dictionary[i] == -1) {
             if (memchr(c, letter, k) != NULL) return 'n';
@@ -135,11 +120,39 @@ char count_letters(char *c) {
     return 'y';
 }
 
-void update_v(node *n) {
+node *new_node_ins() {
+    node *n = malloc(sizeof(node));
+    n->key = malloc(k);
+    memcpy(n->key, buffer, k);
+    n->left = n->right = NULL;
     char *c = n->key;
-    if (c != NULL) {
+    for (int i = 0; i < k; i++) {
+        if (discovered[i] != '#') {
+            if (c[i] != discovered[i])return n;
+        }
+    }
+    for (int i = 0; i < k; i++) {
+        if (memchr(not_present[i], c[i], k) != NULL)return n;
+    }
+    if (count_letters(c) == 'n') return n;
+    n->v = 'y';
+    valid++;
+    return n;
+}
+
+void add_ins(node **tree) {
+    while ((*tree) != NULL) {
+        if (memcmp(buffer, (*tree)->key, k) < 0) tree = (node **) &(*tree)->left;
+        else tree = (node **) &(*tree)->right;
+    }
+    (*tree) = new_node_ins();
+}
+
+void update_v(node *n) {
+    if (n != NULL) {
         update_v((node *) n->left);
         update_v((node *) n->right);
+        char *c = n->key;
         if (n->v == 'y') {
             for (int i = 0; i < k; i++) {
                 if (discovered[i] != '#') {
@@ -162,51 +175,27 @@ void update_v(node *n) {
             valid++;
         }
     }
-    return;
-}
-
-void add_ins(node *n) {
-    while (n->key != NULL) {
-        if (memcmp(buffer, n->key, k) < 0) n = (node *) n->left;
-        else n = (node *) n->right;
-    }
-    n->key = malloc(k);
-    memcpy(n->key, buffer, k + 1);
-    n->left = initialize((node *) n->left);
-    n->right = initialize((node *) n->right);
-    char *c = n->key;
-/* update_v for new words */
-    for (int i = 0; i < k; i++) {
-        if (discovered[i] != '#') {
-            if (c[i] != discovered[i]) return;
-        }
-    }
-    for (int i = 0; i < k; i++) {
-        if (memchr(not_present[i], c[i], k) != NULL) return;
-    }
-    if (count_letters(c) == 'n') return;
-    n->v = 'y';
-    valid++;
-    return;
 }
 
 void valid_all(node *n) {
-    if (n->key != NULL) {
+    if (n != NULL) {
         valid_all((node *) n->left);
         n->v = 'y';
         valid_all((node *) n->right);
     }
-    return;
 }
 
 void command(char *string) {
     if (string[1] == 'n') {
-        for (int i = 0; i < DIC_SIZE; i++) {
-            for (int j = 0; j < DIC_SIZE; j++) {
-                valid_all(hash_table[i][j]);
+        if (flag == 0) {
+            for (int i = 0; i < DIC_SIZE; i++) {
+                for (int j = 0; j < DIC_SIZE; j++) {
+                    valid_all(hash_table[i][j]);
+                }
             }
+            valid = 0;
         }
-        valid = 0;
+        flag = 0;
         memset(discovered, '#', k);
         memset(dictionary, 0, DIC_SIZE * sizeof(int));
         for (int i = 0; i < k; i++) memset(not_present[i], '#', k);
@@ -225,11 +214,10 @@ void command(char *string) {
                     return;
                 } else command(buffer);
             }
-            add_ins(hash_table[hash(buffer[0])][hash(buffer[1])]);
+            add_ins(&hash_table[hash(buffer[0])][hash(buffer[1])]);
         }
     }
     print_table();
-    return;
 }
 
 void d_update(char c, char bool, int count) {
@@ -238,7 +226,6 @@ void d_update(char c, char bool, int count) {
         return;
     }
     if (count > dictionary[hash(c)]) dictionary[hash(c)] = count;
-    return;
 }
 
 void pregame() {
@@ -248,7 +235,7 @@ void pregame() {
             command(buffer);
             return;
         }
-        add(hash_table[hash(buffer[0])][hash(buffer[1])]);
+        add(&hash_table[hash(buffer[0])][hash(buffer[1])]);
     }
 }
 
@@ -349,7 +336,6 @@ void game() {
     }
     printf("\n%d\n", valid);
     attempts--;
-    return;
 }
 
 int main() {
@@ -367,7 +353,7 @@ int main() {
     memset(discovered, '#', k);
     buffer = malloc(k);
     w = scanf("%s", buffer);
-    add(hash_table[hash(buffer[0])][hash(buffer[1])]);
+    add(&hash_table[hash(buffer[0])][hash(buffer[1])]);
     pregame();
     if (gameon == -2) {
         if (w == EOF) printf("ERRORE");
