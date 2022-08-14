@@ -4,7 +4,7 @@
 
 #define DIC_SIZE 64
 
-int k, attempts, flag = 1, gameon = 1, valid = 0;
+int k, attempts, gameon = 1, valid = 0;
 char *r, *p, *discovered, *buffer;
 int *dictionary;
 char **not_present;
@@ -34,8 +34,8 @@ void hash_init() {
 
 node *new_node() {
     node *n = malloc(sizeof(node));
-    n->key = malloc(k);
-    memcpy(n->key, buffer, k);
+    n->key = malloc(k + 1);
+    memcpy(n->key, buffer, k + 1);
     n->left = n->right = NULL;
     n->v = 'y';
     return n;
@@ -62,7 +62,7 @@ int exists(node *n) {
 void inorder_tree_walk(node *n) {
     if (n != NULL) {
         inorder_tree_walk((node *) n->left);
-        if (n->v == 'y') printf("%s\n", n->key);
+        if (n->v == 'y') puts(n->key);;
         inorder_tree_walk((node *) n->right);
     }
 }
@@ -122,16 +122,14 @@ char count_letters(char *c) {
 
 node *new_node_ins() {
     node *n = malloc(sizeof(node));
-    n->key = malloc(k);
-    memcpy(n->key, buffer, k);
+    n->key = malloc(k + 1);
+    memcpy(n->key, buffer, k + 1);
     n->left = n->right = NULL;
     char *c = n->key;
     for (int i = 0; i < k; i++) {
         if (discovered[i] != '#') {
             if (c[i] != discovered[i])return n;
         }
-    }
-    for (int i = 0; i < k; i++) {
         if (memchr(not_present[i], c[i], k) != NULL)return n;
     }
     if (count_letters(c) == 'n') return n;
@@ -142,8 +140,8 @@ node *new_node_ins() {
 
 void add_ins(node **tree) {
     while ((*tree) != NULL) {
-        if (memcmp(buffer, (*tree)->key, k) < 0) tree = (node **) &(*tree)->left;
-        else tree = (node **) &(*tree)->right;
+        if (memcmp(buffer, (*tree)->key, k) > 0) tree = (node **) &(*tree)->right;
+        else tree = (node **) &(*tree)->left;
     }
     (*tree) = new_node_ins();
 }
@@ -152,23 +150,20 @@ void update_v(node *n) {
     if (n != NULL) {
         update_v((node *) n->left);
         update_v((node *) n->right);
-        char *c = n->key;
         if (n->v == 'y') {
             for (int i = 0; i < k; i++) {
                 if (discovered[i] != '#') {
-                    if (c[i] != discovered[i]) {
+                    if (n->key[i] != discovered[i]) {
                         n->v = 'n';
                         return;
                     }
                 }
-            }
-            for (int i = 0; i < k; i++) {
-                if (memchr(not_present[i], c[i], k) != NULL) {
+                if (memchr(not_present[i], n->key[i], k) != NULL) {
                     n->v = 'n';
                     return;
                 }
             }
-            if (count_letters(c) == 'n') {
+            if (count_letters(n->key) == 'n') {
                 n->v = 'n';
                 return;
             }
@@ -187,18 +182,15 @@ void valid_all(node *n) {
 
 void command(char *string) {
     if (string[1] == 'n') {
-        if (flag == 0) {
-            for (int i = 0; i < DIC_SIZE; i++) {
-                for (int j = 0; j < DIC_SIZE; j++) {
-                    valid_all(hash_table[i][j]);
-                }
+        for (int i = 0; i < DIC_SIZE; i++) {
+            for (int j = 0; j < DIC_SIZE; j++) {
+                valid_all(hash_table[i][j]);
             }
-            memset(discovered, '#', k);
-            memset(dictionary, 0, DIC_SIZE * sizeof(int));
-            for (int i = 0; i < k; i++) memset(not_present[i], '#', k);
-            valid = 0;
-        } else flag = 0;
-/* rules rest done */
+        }
+        memset(discovered, '#', k);
+        memset(dictionary, 0, DIC_SIZE * sizeof(int));
+        for (int i = 0; i < k; i++) memset(not_present[i], '#', k);
+        valid = 0;
         w = scanf("%s", r);
         w = scanf("%d", &attempts);
         gameon = 0;
@@ -219,14 +211,6 @@ void command(char *string) {
     print_table();
 }
 
-void d_update(char c, char bool, int count) {
-    if (bool == 'n') {
-        dictionary[hash(c)] = -1;
-        return;
-    }
-    if (count > dictionary[hash(c)]) dictionary[hash(c)] = count;
-}
-
 void pregame() {
     while (1) {
         w = scanf("%s", buffer);
@@ -240,7 +224,7 @@ void pregame() {
 
 void game() {
     if (exists(hash_table[hash(p[0])][hash(p[1])]) == 1) {
-        printf("not_exists\n");
+        puts("not_exists");
         return;
     }
     int count;
@@ -257,11 +241,11 @@ void game() {
         if (r[i] == p[i]) {
             printf("+");
             discovered[i] = p[i];
-            d_update(p[i], 'y', LV);
+            if (LV > dictionary[hash(p[i])]) dictionary[hash(p[i])] = LV;
             continue;
         }
         if (memchr(r, p[i], k) == NULL) {
-            d_update(p[i], 'n', -1);
+            dictionary[hash(p[i])] = -1;
             printf("/");
             continue;
         } else {
@@ -278,13 +262,14 @@ void game() {
                             break;
                         }
                     }
-                    d_update(p[i], 'y', 100 + LR);
+                    if ((100 + LR) > dictionary[hash(p[i])]) dictionary[hash(p[i])] = 100 + LR;
+
                     continue;
                 }
             }
             if (LV <= LR) {
                 printf("|");
-                d_update(p[i], 'y', LV);
+                if (LV > dictionary[hash(p[i])]) dictionary[hash(p[i])] = LV;
                 for (int j = 0; j < k; j++) {
                     if (not_present[i][j] == p[i]) break;
                     if (not_present[i][j] == '#') {
@@ -294,7 +279,7 @@ void game() {
                 }
                 continue;
             }
-            d_update(p[i], 'y', 100 + LR);
+            if ((100 + LR) > dictionary[hash(p[i])]) dictionary[hash(p[i])] = 100 + LR;
             printf("/");
             for (int j = 0; j < k; j++) {
                 if (not_present[i][j] == p[i]) break;
@@ -337,11 +322,24 @@ void game() {
     attempts--;
 }
 
+void pregame_init() {
+    while (1) {
+        w = scanf("%s", buffer);
+        if (buffer[0] == '+') {
+            w = scanf("%s", r);
+            w = scanf("%d", &attempts);
+            gameon = 0;
+            return;
+        }
+        add(&hash_table[hash(buffer[0])][hash(buffer[1])]);
+    }
+}
+
 int main() {
     hash_init();
     w = scanf("%d", &k);
-    r = malloc(k);
-    p = malloc(k);
+    r = malloc(k + 1);
+    p = malloc(k + 1);
     not_present = malloc(sizeof(char *) * k);
     for (int i = 0; i < k; i++) {
         not_present[i] = malloc(k);
@@ -350,16 +348,16 @@ int main() {
     dictionary = calloc(DIC_SIZE, sizeof(int));
     discovered = malloc(k);
     memset(discovered, '#', k);
-    buffer = malloc(k);
+    buffer = malloc(k + 1);
     w = scanf("%s", buffer);
     add(&hash_table[hash(buffer[0])][hash(buffer[1])]);
-    pregame();
+    pregame_init();
     if (gameon == -2) {
         if (w == EOF) printf("ERRORE");
     }
     while (1) {
         if (attempts == 0) {
-            printf("ko\n");
+            puts("ko");
             pregame();
         }
         gameon = 0;
@@ -370,7 +368,7 @@ int main() {
         }
         if (memcmp(r, p, k) == 0) {
             gameon = 1;
-            printf("ok\n");
+            puts("ok");
         }
         if (gameon == 0) game();
         if (gameon == 1) pregame();
