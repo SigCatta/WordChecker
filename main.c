@@ -362,6 +362,7 @@ int main() {
         }
         gameon = 0;
         w = scanf("%s", p);
+        if (w == EOF) return 0;
         if (p[0] == '+') {
             command(p);
             gameon = 2;
@@ -372,6 +373,5 @@ int main() {
         }
         if (gameon == 0) game();
         if (gameon == 1) pregame();
-        if (w == EOF) return 0;
     }
 }
