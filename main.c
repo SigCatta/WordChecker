@@ -203,7 +203,10 @@ void command(char *string) {
                 if (buffer[1] == 'i') {
                     gameon = 0;
                     return;
-                } else command(buffer);
+                } else {
+                    command(buffer);
+                    return;
+                }
             }
             add_ins(&hash_table[hash(buffer[0])][hash(buffer[1])]);
         }
@@ -214,9 +217,16 @@ void command(char *string) {
 void pregame() {
     while (1) {
         w = scanf("%s", buffer);
+        if (w == EOF) return;
         if (buffer[0] == '+') {
-            command(buffer);
-            return;
+            if (buffer[1] == 'n'){
+                command(buffer);
+                return;
+            }
+            else {
+                command(buffer);
+                continue;
+            }
         }
         add(&hash_table[hash(buffer[0])][hash(buffer[1])]);
     }
@@ -326,10 +336,15 @@ void pregame_init() {
     while (1) {
         w = scanf("%s", buffer);
         if (buffer[0] == '+') {
-            w = scanf("%s", r);
-            w = scanf("%d", &attempts);
-            gameon = 0;
-            return;
+            if(buffer[1] == 'n'){
+                w = scanf("%s", r);
+                w = scanf("%d", &attempts);
+                gameon = 0;
+                return;
+            } else {
+                command(buffer);
+                continue;
+            }
         }
         add(&hash_table[hash(buffer[0])][hash(buffer[1])]);
     }
@@ -352,10 +367,7 @@ int main() {
     w = scanf("%s", buffer);
     add(&hash_table[hash(buffer[0])][hash(buffer[1])]);
     pregame_init();
-    if (gameon == -2) {
-        if (w == EOF) printf("ERRORE");
-    }
-    while (1) {
+    while (w != EOF) {
         if (attempts == 0) {
             puts("ko");
             pregame();
@@ -374,4 +386,5 @@ int main() {
         if (gameon == 0) game();
         if (gameon == 1) pregame();
     }
+    return 0;
 }
