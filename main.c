@@ -219,11 +219,10 @@ void pregame() {
         w = scanf("%s", buffer);
         if (w == EOF) return;
         if (buffer[0] == '+') {
-            if (buffer[1] == 'n'){
+            if (buffer[1] == 'n') {
                 command(buffer);
                 return;
-            }
-            else {
+            } else {
                 command(buffer);
                 continue;
             }
@@ -240,14 +239,6 @@ void game() {
     int count;
     int LR, LV, LP;
     for (int i = 0; i < k; i++) {
-        count = 0, LP = 0, LR = 0, LV = 0;
-        for (int j = 0; j < k; j++) {
-            if (p[j] == p[i]) {
-                LP++;
-                if (j <= i) LV++;
-            }
-            if (r[j] == p[i]) LR++;
-        }
         if (r[i] == p[i]) {
             printf("+");
             discovered[i] = p[i];
@@ -259,6 +250,14 @@ void game() {
             printf("/");
             continue;
         } else {
+            count = 0, LP = 0, LR = 0, LV = 0;
+            for (int j = 0; j < k; j++) {
+                if (p[j] == p[i]) {
+                    LP++;
+                    if (j <= i) LV++;
+                }
+                if (r[j] == p[i]) LR++;
+            }
             if (LP > LR) {
                 for (int j = 0; j < k; j++) {
                     if (p[j] == p[i] && p[j] == r[j]) count++;
@@ -336,7 +335,7 @@ void pregame_init() {
     while (1) {
         w = scanf("%s", buffer);
         if (buffer[0] == '+') {
-            if(buffer[1] == 'n'){
+            if (buffer[1] == 'n') {
                 w = scanf("%s", r);
                 w = scanf("%d", &attempts);
                 gameon = 0;
@@ -355,6 +354,7 @@ int main() {
     w = scanf("%d", &k);
     r = malloc(k + 1);
     p = malloc(k + 1);
+    buffer = malloc(k + 1);
     not_present = malloc(sizeof(char *) * k);
     for (int i = 0; i < k; i++) {
         not_present[i] = malloc(k);
@@ -363,9 +363,6 @@ int main() {
     dictionary = calloc(DIC_SIZE, sizeof(int));
     discovered = malloc(k);
     memset(discovered, '#', k);
-    buffer = malloc(k + 1);
-    w = scanf("%s", buffer);
-    add(&hash_table[hash(buffer[0])][hash(buffer[1])]);
     pregame_init();
     while (w != EOF) {
         if (attempts == 0) {
