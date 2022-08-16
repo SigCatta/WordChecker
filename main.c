@@ -236,9 +236,17 @@ void game() {
         puts("not_exists");
         return;
     }
-    int count;
+    int count, countV;
     int LR, LV, LP;
     for (int i = 0; i < k; i++) {
+        count = 0, countV = 0, LP = 0, LR = 0, LV = 0;
+        for (int j = 0; j < k; j++) {
+            if (p[j] == p[i]) {
+                LP++;
+                if (j <= i) LV++;
+            }
+            if (r[j] == p[i]) LR++;
+        }
         if (r[i] == p[i]) {
             printf("+");
             discovered[i] = p[i];
@@ -250,19 +258,14 @@ void game() {
             printf("/");
             continue;
         } else {
-            count = 0, LP = 0, LR = 0, LV = 0;
-            for (int j = 0; j < k; j++) {
-                if (p[j] == p[i]) {
-                    LP++;
-                    if (j <= i) LV++;
-                }
-                if (r[j] == p[i]) LR++;
-            }
             if (LP > LR) {
                 for (int j = 0; j < k; j++) {
-                    if (p[j] == p[i] && p[j] == r[j]) count++;
+                    if (p[j] == p[i] && p[j] == r[j]) {
+                        count++;
+                        if (j < i) countV++;
+                    }
                 }
-                if (count == LR) {
+                if (LV - countV - 1 >= LR - count) {
                     printf("/");
                     for (int j = 0; j < k; j++) {
                         if (not_present[i][j] == p[i]) break;
@@ -272,7 +275,6 @@ void game() {
                         }
                     }
                     if ((100 + LR) > dictionary[hash(p[i])]) dictionary[hash(p[i])] = 100 + LR;
-
                     continue;
                 }
             }
