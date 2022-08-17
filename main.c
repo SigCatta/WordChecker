@@ -105,9 +105,6 @@ char count_letters(char *c) {
         letter = (('a' + (i - 38)) * (i >= 38)) + ((i == 37) * '_') + ((i >= 11) * (i <= 36) * ('A' + (i - 11))) +
                  ((i >= 1) * (i <= 10) * ('0' + (i - 1))) + ((i == 0) * '-');
         count = 0;
-        if (dictionary[i] == -1) {
-            if (memchr(c, letter, k) != NULL) return 'n';
-        }
         for (int j = 0; j < k; j++) {
             if (c[j] == letter) count++;
         }
@@ -118,6 +115,36 @@ char count_letters(char *c) {
         if (count < dictionary[i]) return 'n';
     }
     return 'y';
+}
+
+void update_v(node *n) {
+    if (n != NULL) {
+        update_v((node *) n->left);
+        update_v((node *) n->right);
+        if (n->v == 'y') {
+            for (int i = 0; i < k; i++) {
+                if (discovered[i] != '#') {
+                    if (n->key[i] != discovered[i]) {
+                        n->v = 'n';
+                        return;
+                    }
+                }
+                if (memchr(not_present[i], n->key[i], k) != NULL) {
+                    n->v = 'n';
+                    return;
+                }
+                if (dictionary[hash(n->key[i])] == -1) {
+                    n->v = 'n';
+                    return;
+                }
+            }
+            if (count_letters(n->key) == 'n') {
+                n->v = 'n';
+                return;
+            }
+            valid++;
+        }
+    }
 }
 
 node *new_node_ins() {
@@ -144,32 +171,6 @@ void add_ins(node **tree) {
         else tree = (node **) &(*tree)->left;
     }
     (*tree) = new_node_ins();
-}
-
-void update_v(node *n) {
-    if (n != NULL) {
-        update_v((node *) n->left);
-        update_v((node *) n->right);
-        if (n->v == 'y') {
-            for (int i = 0; i < k; i++) {
-                if (discovered[i] != '#') {
-                    if (n->key[i] != discovered[i]) {
-                        n->v = 'n';
-                        return;
-                    }
-                }
-                if (memchr(not_present[i], n->key[i], k) != NULL) {
-                    n->v = 'n';
-                    return;
-                }
-            }
-            if (count_letters(n->key) == 'n') {
-                n->v = 'n';
-                return;
-            }
-            valid++;
-        }
-    }
 }
 
 void valid_all(node *n) {
@@ -237,12 +238,15 @@ void game() {
         return;
     }
     int count, countV;
-    int LR, LV, LP;
+    int LR, LV;
     for (int i = 0; i < k; i++) {
-        count = 0, countV = 0, LP = 0, LR = 0, LV = 0;
+        count = 0, countV = 0, LR = 0, LV = 0;
         for (int j = 0; j < k; j++) {
             if (p[j] == p[i]) {
-                LP++;
+                if(p[j] == r[j]) {
+                    count++;
+                    if (j<= i) countV++;
+                }
                 if (j <= i) LV++;
             }
             if (r[j] == p[i]) LR++;
@@ -258,29 +262,8 @@ void game() {
             printf("/");
             continue;
         } else {
-            if (LP > LR) {
-                for (int j = 0; j < k; j++) {
-                    if (p[j] == p[i] && p[j] == r[j]) {
-                        count++;
-                        if (j < i) countV++;
-                    }
-                }
-                if (LV - countV - 1 >= LR - count) {
-                    printf("/");
-                    for (int j = 0; j < k; j++) {
-                        if (not_present[i][j] == p[i]) break;
-                        if (not_present[i][j] == '#') {
-                            not_present[i][j] = p[i];
-                            break;
-                        }
-                    }
-                    if ((100 + LR) > dictionary[hash(p[i])]) dictionary[hash(p[i])] = 100 + LR;
-                    continue;
-                }
-            }
-            if (LV <= LR) {
-                printf("|");
-                if (LV > dictionary[hash(p[i])]) dictionary[hash(p[i])] = LV;
+            if (LV - countV - 1 >= LR - count) {
+                printf("/");
                 for (int j = 0; j < k; j++) {
                     if (not_present[i][j] == p[i]) break;
                     if (not_present[i][j] == '#') {
@@ -288,10 +271,11 @@ void game() {
                         break;
                     }
                 }
+                if ((100 + LR) > dictionary[hash(p[i])]) dictionary[hash(p[i])] = 100 + LR;
                 continue;
             }
-            if ((100 + LR) > dictionary[hash(p[i])]) dictionary[hash(p[i])] = 100 + LR;
-            printf("/");
+            printf("|");
+            if (LV > dictionary[hash(p[i])]) dictionary[hash(p[i])] = LV;
             for (int j = 0; j < k; j++) {
                 if (not_present[i][j] == p[i]) break;
                 if (not_present[i][j] == '#') {
@@ -299,6 +283,7 @@ void game() {
                     break;
                 }
             }
+            continue;
         }
     }
     if (valid != 1) {
