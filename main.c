@@ -20,8 +20,11 @@ typedef struct {
 node *hash_table[DIC_SIZE][DIC_SIZE];
 
 int hash(char c) {
-    return ((c >= '0') * (c <= '9') * (c - 48 + 1)) + ((c >= 'A') * (c <= 'Z') * (c - 65 + 11)) + ((c == '_') * 37) +
-           ((c >= 'a') * (c <= 'z') * (c - 97 + 38));
+    if (c >= 'a') return c - 97 + 38;
+    if (c == '_') return 37;
+    if (c >= 'A') return c - 65 + 11;
+    if (c >= '0') return c - 48 + 1;
+    return 0;
 }
 
 void hash_init() {
@@ -102,9 +105,15 @@ char count_letters(char *c) {
     char letter;
     for (int i = 0; i < DIC_SIZE; i++) {
         if (dictionary[i] == 0) continue;
-        letter = (('a' + (i - 38)) * (i >= 38)) + ((i == 37) * '_') + ((i >= 11) * (i <= 36) * ('A' + (i - 11))) +
-                 ((i >= 1) * (i <= 10) * ('0' + (i - 1))) + ((i == 0) * '-');
+        if (i >= 38) letter = 'a' + (i - 38);
+        else if (i == 37) letter = '_';
+        else if (i >= 11) letter = 'A' + (i - 11);
+        else if (i >= 1) letter = '0' + (i - 1);
+        else letter = '-';
         count = 0;
+        if (dictionary[i] == -1) {
+            if (memchr(c, letter, k) != NULL) return 'n';
+        }
         for (int j = 0; j < k; j++) {
             if (c[j] == letter) count++;
         }
@@ -133,10 +142,6 @@ void update_v(node *n) {
                     n->v = 'n';
                     return;
                 }
-                if (dictionary[hash(n->key[i])] == -1) {
-                    n->v = 'n';
-                    return;
-                }
             }
             if (count_letters(n->key) == 'n') {
                 n->v = 'n';
@@ -158,6 +163,7 @@ node *new_node_ins() {
             if (c[i] != discovered[i])return n;
         }
         if (memchr(not_present[i], c[i], k) != NULL)return n;
+        if (dictionary[hash(c[i])] == -1) return n;
     }
     if (count_letters(c) == 'n') return n;
     n->v = 'y';
@@ -243,9 +249,9 @@ void game() {
         count = 0, countV = 0, LR = 0, LV = 0;
         for (int j = 0; j < k; j++) {
             if (p[j] == p[i]) {
-                if(p[j] == r[j]) {
+                if (p[j] == r[j]) {
                     count++;
-                    if (j<= i) countV++;
+                    if (j <= i) countV++;
                 }
                 if (j <= i) LV++;
             }
@@ -271,7 +277,7 @@ void game() {
                         break;
                     }
                 }
-                if ((100 + LR) > dictionary[hash(p[i])]) dictionary[hash(p[i])] = 100 + LR;
+                dictionary[hash(p[i])] = 100 + LR;
                 continue;
             }
             printf("|");
