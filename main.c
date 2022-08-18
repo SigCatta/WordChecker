@@ -19,6 +19,21 @@ typedef struct {
 
 node *hash_table[DIC_SIZE][DIC_SIZE];
 
+void *fastmemchr(char *src, char c) {
+    for (int i = 0; i <= k; i++) {
+        if (src[i] == '#') return NULL;
+        if (src[i] == c) return &src[i];
+    }
+    return NULL;
+}
+
+int fastmemcmp(char *x, char *y) {
+    for (int i = 0; i <= k; i++) {
+        if (x[i] != y[i]) return x[i] < y[i] ? -1 : 1;
+    }
+    return 0;
+}
+
 int hash(char c) {
     if (c >= 'a') return c - 97 + 38;
     if (c == '_') return 37;
@@ -37,8 +52,8 @@ void hash_init() {
 
 node *new_node() {
     node *n = malloc(sizeof(node));
-    n->key = malloc(k + 1);
-    memcpy(n->key, buffer, k + 1);
+    n->key = buffer;
+    buffer = malloc(k + 1);
     n->left = n->right = NULL;
     n->v = 'y';
     return n;
@@ -46,7 +61,7 @@ node *new_node() {
 
 void add(node **tree) {
     while ((*tree) != NULL) {
-        if (memcmp(buffer, (*tree)->key, k) < 0) tree = (node **) &(*tree)->left;
+        if (fastmemcmp(buffer, (*tree)->key) < 0) tree = (node **) &(*tree)->left;
         else tree = (node **) &(*tree)->right;
     }
     (*tree) = new_node();
@@ -54,7 +69,7 @@ void add(node **tree) {
 
 int exists(node *n) {
     while (n != NULL) {
-        int value = memcmp(p, n->key, k);
+        int value = fastmemcmp(p, n->key);
         if (value == 0) return 0;
         if (value < 0) n = (node *) n->left;
         else n = (node *) n->right;
@@ -65,7 +80,7 @@ int exists(node *n) {
 void inorder_tree_walk(node *n) {
     if (n != NULL) {
         inorder_tree_walk((node *) n->left);
-        if (n->v == 'y') puts(n->key);;
+        if (n->v == 'y') puts(n->key);
         inorder_tree_walk((node *) n->right);
     }
 }
@@ -112,7 +127,8 @@ char count_letters(char *c) {
         else letter = '-';
         count = 0;
         if (dictionary[i] == -1) {
-            if (memchr(c, letter, k) != NULL) return 'n';
+            if (fastmemchr(c, letter) != NULL) return 'n';
+            continue;
         }
         for (int j = 0; j < k; j++) {
             if (c[j] == letter) count++;
@@ -125,6 +141,52 @@ char count_letters(char *c) {
     }
     return 'y';
 }
+/*
+void new_update_v(node *n) {
+    if (n != NULL) {
+        new_update_v((node *) n->left);
+        new_update_v((node *) n->right);
+        if (n->v == 'y') {
+            if (k > 64) {
+                for (int i = 0; i < k; i++) {
+                    if (discovered[i] != '#') {
+                        if (n->key[i] != discovered[i]) {
+                            n->v = 'n';
+                            return;
+                        }
+                    }
+                    if (fastmemchr(not_present[i], n->key[i]) != NULL) {
+                        n->v = 'n';
+                        return;
+                    }
+                    if (i < 64) {
+                        if (dictionary[i] == 0) continue;
+                        char letter;
+                        if (dictionary[i] == -1) {
+                            if (i >= 38) letter = 'a' + (i - 38);
+                            else if (i == 37) letter = '_';
+                            else if (i >= 11) letter = 'A' + (i - 11);
+                            else if (i >= 1) letter = '0' + (i - 1);
+                            else letter = '-';
+                            if (fastmemchr(n->key, letter) != NULL) {
+                                n->v = 'n';
+                                return;
+                            }
+
+                        }
+                        if (dictionary[i] > 100) {
+                            int count = 0;
+                            for (int j = 0; j < k; j++){
+                                if (c[j])
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+*/
 
 void update_v(node *n) {
     if (n != NULL) {
@@ -138,7 +200,7 @@ void update_v(node *n) {
                         return;
                     }
                 }
-                if (memchr(not_present[i], n->key[i], k) != NULL) {
+                if (fastmemchr(not_present[i], n->key[i]) != NULL) {
                     n->v = 'n';
                     return;
                 }
@@ -154,18 +216,17 @@ void update_v(node *n) {
 
 node *new_node_ins() {
     node *n = malloc(sizeof(node));
-    n->key = malloc(k + 1);
-    memcpy(n->key, buffer, k + 1);
+    n->key = buffer;
+    buffer = malloc(k + 1);
     n->left = n->right = NULL;
-    char *c = n->key;
     for (int i = 0; i < k; i++) {
         if (discovered[i] != '#') {
-            if (c[i] != discovered[i])return n;
+            if (n->key[i] != discovered[i])return n;
         }
-        if (memchr(not_present[i], c[i], k) != NULL)return n;
-        if (dictionary[hash(c[i])] == -1) return n;
+        if (fastmemchr(not_present[i], n->key[i]) != NULL)return n;
+        if (dictionary[hash(n->key[i])] == -1) return n;
     }
-    if (count_letters(c) == 'n') return n;
+    if (count_letters(n->key) == 'n') return n;
     n->v = 'y';
     valid++;
     return n;
@@ -173,7 +234,7 @@ node *new_node_ins() {
 
 void add_ins(node **tree) {
     while ((*tree) != NULL) {
-        if (memcmp(buffer, (*tree)->key, k) > 0) tree = (node **) &(*tree)->right;
+        if (fastmemcmp(buffer, (*tree)->key) > 0) tree = (node **) &(*tree)->right;
         else tree = (node **) &(*tree)->left;
     }
     (*tree) = new_node_ins();
@@ -218,7 +279,8 @@ void command(char *string) {
             add_ins(&hash_table[hash(buffer[0])][hash(buffer[1])]);
         }
     }
-    print_table();
+    if (valid != 1)print_table();
+    else puts(r);
 }
 
 void pregame() {
@@ -263,7 +325,7 @@ void game() {
             if (LV > dictionary[hash(p[i])]) dictionary[hash(p[i])] = LV;
             continue;
         }
-        if (memchr(r, p[i], k) == NULL) {
+        if (LR == 0) {
             dictionary[hash(p[i])] = -1;
             printf("/");
             continue;
@@ -369,7 +431,7 @@ int main() {
             command(p);
             gameon = 2;
         }
-        if (memcmp(r, p, k) == 0) {
+        if (fastmemcmp(r, p) == 0) {
             gameon = 1;
             puts("ok");
         }
