@@ -141,52 +141,6 @@ char count_letters(char *c) {
     }
     return 'y';
 }
-/*
-void new_update_v(node *n) {
-    if (n != NULL) {
-        new_update_v((node *) n->left);
-        new_update_v((node *) n->right);
-        if (n->v == 'y') {
-            if (k > 64) {
-                for (int i = 0; i < k; i++) {
-                    if (discovered[i] != '#') {
-                        if (n->key[i] != discovered[i]) {
-                            n->v = 'n';
-                            return;
-                        }
-                    }
-                    if (fastmemchr(not_present[i], n->key[i]) != NULL) {
-                        n->v = 'n';
-                        return;
-                    }
-                    if (i < 64) {
-                        if (dictionary[i] == 0) continue;
-                        char letter;
-                        if (dictionary[i] == -1) {
-                            if (i >= 38) letter = 'a' + (i - 38);
-                            else if (i == 37) letter = '_';
-                            else if (i >= 11) letter = 'A' + (i - 11);
-                            else if (i >= 1) letter = '0' + (i - 1);
-                            else letter = '-';
-                            if (fastmemchr(n->key, letter) != NULL) {
-                                n->v = 'n';
-                                return;
-                            }
-
-                        }
-                        if (dictionary[i] > 100) {
-                            int count = 0;
-                            for (int j = 0; j < k; j++){
-                                if (c[j])
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-*/
 
 void update_v(node *n) {
     if (n != NULL) {
@@ -240,21 +194,16 @@ void add_ins(node **tree) {
     (*tree) = new_node_ins();
 }
 
-void valid_all(node *n) {
+void print_all(node *n) {
     if (n != NULL) {
-        valid_all((node *) n->left);
-        n->v = 'y';
-        valid_all((node *) n->right);
+        print_all((node *) n->left);
+        puts(n->key);
+        print_all((node *) n->right);
     }
 }
 
 void command(char *string) {
     if (string[1] == 'n') {
-        for (int i = 0; i < DIC_SIZE; i++) {
-            for (int j = 0; j < DIC_SIZE; j++) {
-                valid_all(hash_table[i][j]);
-            }
-        }
         memset(discovered, '#', k);
         memset(dictionary, 0, DIC_SIZE * sizeof(int));
         for (int i = 0; i < k; i++) memset(not_present[i], '#', k);
@@ -279,8 +228,14 @@ void command(char *string) {
             add_ins(&hash_table[hash(buffer[0])][hash(buffer[1])]);
         }
     }
-    if (valid != 1)print_table();
-    else puts(r);
+    if (valid > 1) print_table();
+    else if (valid == 0) {
+        for (int i = 0; i < DIC_SIZE; i++) {
+            for (int j = 0; j < DIC_SIZE; j++) {
+                print_all(hash_table[i][j]);
+            }
+        }
+    } else puts(r);
 }
 
 void pregame() {
@@ -297,6 +252,31 @@ void pregame() {
             }
         }
         add(&hash_table[hash(buffer[0])][hash(buffer[1])]);
+    }
+}
+
+void first_update(node *n) {
+    if (n != NULL) {
+        first_update((node *) n->left);
+        first_update((node *) n->right);
+        for (int i = 0; i < k; i++) {
+            if (discovered[i] != '#') {
+                if (n->key[i] != discovered[i]) {
+                    n->v = 'n';
+                    return;
+                }
+            }
+            if (fastmemchr(not_present[i], n->key[i]) != NULL) {
+                n->v = 'n';
+                return;
+            }
+        }
+        if (count_letters(n->key) == 'n') {
+            n->v = 'n';
+            return;
+        }
+        n->v = 'y';
+        valid++;
     }
 }
 
@@ -354,7 +334,7 @@ void game() {
             continue;
         }
     }
-    if (valid != 1) {
+    if (valid > 1) {
         valid = 0;
         if (discovered[0] != '#') {
             if (discovered[1] != '#') {
@@ -379,6 +359,14 @@ void game() {
                     if (dictionary[j] == -1) continue;
                     update_v(hash_table[i][j]);
                 }
+            }
+        }
+    } else if (valid == 0) {
+        for (int i = 0; i < DIC_SIZE; i++) {
+            if (dictionary[i] == -1) continue;
+            for (int j = 0; j < DIC_SIZE; j++) {
+                if (dictionary[j] == -1) continue;
+                first_update(hash_table[i][j]);
             }
         }
     }
