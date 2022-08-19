@@ -194,16 +194,21 @@ void add_ins(node **tree) {
     (*tree) = new_node_ins();
 }
 
-void print_all(node *n) {
+void valid_all(node *n) {
     if (n != NULL) {
-        print_all((node *) n->left);
-        puts(n->key);
-        print_all((node *) n->right);
+        valid_all((node *) n->left);
+        n->v = 'y';
+        valid_all((node *) n->right);
     }
 }
 
 void command(char *string) {
     if (string[1] == 'n') {
+        for (int i = 0; i < DIC_SIZE; i++) {
+            for (int j = 0; j < DIC_SIZE; j++) {
+                valid_all(hash_table[i][j]);
+            }
+        }
         memset(discovered, '#', k);
         memset(dictionary, 0, DIC_SIZE * sizeof(int));
         for (int i = 0; i < k; i++) memset(not_present[i], '#', k);
@@ -228,14 +233,8 @@ void command(char *string) {
             add_ins(&hash_table[hash(buffer[0])][hash(buffer[1])]);
         }
     }
-    if (valid > 1) print_table();
-    else if (valid == 0) {
-        for (int i = 0; i < DIC_SIZE; i++) {
-            for (int j = 0; j < DIC_SIZE; j++) {
-                print_all(hash_table[i][j]);
-            }
-        }
-    } else puts(r);
+    if (valid != 1)print_table();
+    else puts(r);
 }
 
 void pregame() {
@@ -252,31 +251,6 @@ void pregame() {
             }
         }
         add(&hash_table[hash(buffer[0])][hash(buffer[1])]);
-    }
-}
-
-void first_update(node *n) {
-    if (n != NULL) {
-        first_update((node *) n->left);
-        first_update((node *) n->right);
-        for (int i = 0; i < k; i++) {
-            if (discovered[i] != '#') {
-                if (n->key[i] != discovered[i]) {
-                    n->v = 'n';
-                    return;
-                }
-            }
-            if (fastmemchr(not_present[i], n->key[i]) != NULL) {
-                n->v = 'n';
-                return;
-            }
-        }
-        if (count_letters(n->key) == 'n') {
-            n->v = 'n';
-            return;
-        }
-        n->v = 'y';
-        valid++;
     }
 }
 
@@ -334,7 +308,7 @@ void game() {
             continue;
         }
     }
-    if (valid > 1) {
+    if (valid != 1) {
         valid = 0;
         if (discovered[0] != '#') {
             if (discovered[1] != '#') {
@@ -361,14 +335,6 @@ void game() {
                 }
             }
         }
-    } else if (valid == 0) {
-        for (int i = 0; i < DIC_SIZE; i++) {
-            if (dictionary[i] == -1) continue;
-            for (int j = 0; j < DIC_SIZE; j++) {
-                if (dictionary[j] == -1) continue;
-                first_update(hash_table[i][j]);
-            }
-        }
     }
     printf("\n%d\n", valid);
     attempts--;
@@ -383,10 +349,7 @@ void pregame_init() {
                 w = scanf("%d", &attempts);
                 gameon = 0;
                 return;
-            } else {
-                command(buffer);
-                continue;
-            }
+            } else continue;
         }
         add(&hash_table[hash(buffer[0])][hash(buffer[1])]);
     }
