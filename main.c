@@ -55,7 +55,6 @@ node *new_node() {
     n->key = buffer;
     buffer = malloc(k + 1);
     n->left = n->right = NULL;
-    n->v = 'y';
     return n;
 }
 
@@ -131,7 +130,7 @@ char count_letters(char *c) {
             continue;
         }
         for (int j = 0; j < k; j++) {
-            if (c[j] == letter) count++;
+            c[j] == letter ? count++ : 0;
         }
         if (dictionary[i] > 100) {
             if (count != dictionary[i] - 100) return 'n';
@@ -172,7 +171,6 @@ void first_update(node *n) {
     if (n != NULL) {
         first_update((node *) n->left);
         first_update((node *) n->right);
-        n->v = 'y';
         for (int i = 0; i < k; i++) {
             if (discovered[i] != '#') {
                 if (n->key[i] != discovered[i]) {
@@ -189,6 +187,7 @@ void first_update(node *n) {
             n->v = 'n';
             return;
         }
+        n->v = 'y';
         valid++;
     }
 }
@@ -207,8 +206,7 @@ node *new_node_ins() {
     }
     if (count_letters(n->key) == 'n') return n;
     n->v = 'y';
-    if (valid == 0) return n;
-    valid++;
+    valid != 0 ? valid++ : 0;
     return n;
 }
 
