@@ -38,8 +38,9 @@ posizione scorretta, allora res[i] deve essere / invece che |
 Inoltre, dopo ogni confronto, il programma deve stampare in output il numero di parole ammissibili ancora compatibili con i vincoli appresi (tranne nel caso in cui la parola confrontata non sia ammissibile)
 
 
-Il progetto deve essere svolto tramite:
-- Linguaggio C11
-- Esclusivamente libreria standard libc (nessuna libreria esterna)
-- Nessuna tecnica di parallelizzazione o multithreading
-- Input fornito tramite stdin e output da fornire in stdout
+Il progetto deve essere svolto:
+- Individualmente
+- tramite linguaggio C11
+- Usando esclusivamente libreria standard libc (nessuna libreria esterna)
+- Non applicando alcun tipo di tecnica di parallelizzazione o multithreading
+- Utilizzando input fornito in stdin e output da fornire in stdout
