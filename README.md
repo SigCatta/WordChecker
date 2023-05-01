@@ -1,6 +1,7 @@
 # Progetto di Algoritmi e Strutture Dati 2022
 Votazione 30L / 30
 
+## Funzionamento atteso
 Il progetto consiste nell'implementazione efficiente e corretta di un sistema che controlli la corrispondenza tra le lettere di due parole di uguale lughezza secondo specifiche definite.
 Le parole sono intese come sequenze di simboli che possono essere caratteri alfabetici minuscoli (a-z) o maiuscoli (A-Z), cifre numeriche(0-9): oppure i simboli - (trattino) e _ ("underscore").
 
@@ -44,3 +45,7 @@ Il progetto deve essere svolto:
 - Usando esclusivamente libreria standard libc (nessuna libreria esterna)
 - Non applicando alcun tipo di tecnica di parallelizzazione o multithreading
 - Utilizzando input fornito in stdin e output da fornire in stdout
+
+## Dettagli implementativi
+La struttura dati utilizzata in questa implementazione consiste in una tabella 64x64 di BST. Ogni parola viene inizialmente inserita in uno dei 4096 alberi in base alle sue prime due lettere. Tramite questa implementaziono più la partita va avanti (quindi più dati sulla parola di riferimento si acquisiscono) meno nodi è necessario controllare, infatti ad ogni tentativo il numero di nodi (parole) controllati sarà sempre minore o uguale a quello precedente (salvo inserimento di nuove parole), ogni informazione acquisita sulle prime due lettere della parola di riferimento ridurrà infatti il numero di nodi controllati, si applica questo ragionamento sia al conteggio di parole ammissibile che alla stampa delle parole ancora ammissibili. L'inserimento delle parole è molto più veloce rispetto a quello che si avrebbe utilizzando un sibgolo BST, si possono infatti scartare 4095 alberi che contengono parole con iniziali diversi in un tempo costante (controllando le prime due lettere della parola da inserire).
+Ai fini di questo progetto, la struttura dati utilizzata fornisce un miglioramento delle prestazioni di circa il 75% rispetto ad un singolo BST (il miglioramento varia a seconda dei casi test)
