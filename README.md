@@ -1,6 +1,7 @@
 # Progetto di Algoritmi e Strutture Dati 2022
+Votazione 30L / 30
 
-Il progetto consiste nell'implementazione efficiente di un sistema che controlli la corrispondenza tra le lettere di due parole di uguale lughezza secondo specifiche definite.
+Il progetto consiste nell'implementazione efficiente e corretta di un sistema che controlli la corrispondenza tra le lettere di due parole di uguale lughezza secondo specifiche definite.
 Le parole sono intese come sequenze di simboli che possono essere caratteri alfabetici minuscoli (a-z) o maiuscoli (A-Z), cifre numeriche(0-9): oppure i simboli - (trattino) e _ ("underscore").
 
 Il sistema deve leggere in ordine:
